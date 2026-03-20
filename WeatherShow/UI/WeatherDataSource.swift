@@ -47,6 +47,7 @@ final class WeatherDataSource: UICollectionViewDiffableDataSource<Sections, Int>
 	private let errorsCellRegistration = UICollectionView.errorsCellRegistration
 	
 	private var isCelsius = true
+	private var displayedHours: [HourData] = []
 	
 	init(collectionView: UICollectionView) {
 		super.init(collectionView: collectionView) { collectionView, indexPath, itemIdentifier in
@@ -77,10 +78,26 @@ final class WeatherDataSource: UICollectionViewDiffableDataSource<Sections, Int>
 			snapshot.reconfigureItems([LocationItem.location.rawValue])
 		}
 		
-		if let hours = weatherData.forecast?.forecastday.first?.hour {
+		if var hours = weatherData.forecast?.forecastday.first?.hour {
+			let currentDate = Date()
+			hours = hours.filter {
+				guard
+					let date = DateFormatter.hourTimeFormatter.date(from: $0.time)
+				else {
+					return false
+				}
+				return date > currentDate
+			}
+			
+			if weatherData.forecast?.forecastday.indices.contains(1) ?? false,
+			   let nextDay = weatherData.forecast?.forecastday[1].hour {
+				hours.append(contentsOf: nextDay)
+			}
 			let items = hours.enumerated().map { index, _ in
 				index + .hoursOffset
 			}
+			displayedHours = hours
+			
 			if snapshot.itemIdentifiers(inSection: .hours).isEmpty {
 				snapshot.appendItems(items, toSection: .hours)
 			} else {
@@ -151,7 +168,7 @@ private extension WeatherDataSource {
 				}
 				return config
 			case .hours:
-				return HoursConfiguration(with: weatherData, index: indexPath.row, celsius: isCelsius)
+				return HoursConfiguration(with: displayedHours[indexPath.row], celsius: isCelsius)
 			case .days:
 				return DayConfiguration(with: weatherData, index: indexPath.row, celsius: isCelsius)
 			case .weatherParameters:

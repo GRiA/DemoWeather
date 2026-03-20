@@ -17,14 +17,7 @@ final class HoursConfiguration: UIContentConfiguration {
 	let temperature: String
 	let symbol: Single<UIImage?>
 	
-	init?(with weather: WeatherData, index: Int, celsius: Bool) {
-		guard
-			let forecast = weather.forecast?.forecastday.first,
-			let hour = forecast.hour.indices.contains(index) ? forecast.hour[index] : nil
-		else {
-			return nil
-		}
-
+	init?(with hour: HourData, celsius: Bool) {
 		if let hourValue = hour.time.extractHour {
 			self.hour = "\(hourValue)"
 		} else {
